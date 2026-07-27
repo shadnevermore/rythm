@@ -1,0 +1,23 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Docker build
+        run: docker build -t rythm .
+
+      - name: Docker run
+        run: docker run -d -p 8901:80 rythm
+
+      - name: Check docker
+        run: curl --fail http://localhost:8901
+
