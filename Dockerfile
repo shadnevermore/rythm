@@ -2,6 +2,6 @@ FROM nginx:alpine
 
 WORKDIR /usr/share/nginx/html
 
-COPY . .
+COPY mini-web/ .
 
 EXPOSE 80
