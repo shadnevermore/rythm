@@ -16,18 +16,17 @@ jobs:
         run: docker build -t rythm .
 
       - name: Docker run
-        run: docker run -d -p 8901:80 rythm
+        run: docker run -d --name rythm -p 8901:80 rythm
 
       - name: Check docker
-        run: curl --fail \
-             --retry 10 \
-             --retry-delay 1 \
-             --retry-all-errors \
-             http://localhost:8901
+        run: curl --fail --retry 10 --retry-delay 1 --retry-all-errors http://localhost:8901
 
-      - name: failed logs
+      - name: Show container logs
         if: failure()
         run: |
-             docker ps -a
-             docker log rythm
+          docker ps -a
+          docker logs rythm
 
+      - name: Remove container
+        if: always()
+        run: docker rm --force rythm
