@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Ритм — простой локальный трекер ежедневных привычек."
+    />
+    <title>Ритм — трекер привычек</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="ambient ambient-one" aria-hidden="true"></div>
+    <div class="ambient ambient-two" aria-hidden="true"></div>
+
+    <main class="shell">
+      <header class="topbar">
+        <a class="brand" href="#" aria-label="Ритм — на главную">
+          <span class="brand-mark" aria-hidden="true">Р</span>
+          <span>ритм</span>
+        </a>
+        <p class="date" id="currentDate"></p>
+      </header>
+
+      <section class="hero" aria-labelledby="pageTitle">
+        <div>
+          <p class="eyebrow">Твой день, твой темп</p>
+          <h1 id="pageTitle">Маленькие шаги.<br /><em>Каждый день.</em></h1>
+        </div>
+
+        <div class="progress-card">
+          <div
+            class="progress-ring"
+            id="progressRing"
+            role="progressbar"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            aria-valuenow="0"
+          >
+            <div class="progress-inner">
+              <strong id="progressPercent">0%</strong>
+              <span>готово</span>
+            </div>
+          </div>
+          <div>
+            <p class="progress-label">Сегодня</p>
+            <p class="progress-copy" id="progressCopy">Начни с одного шага</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="tracker" aria-labelledby="trackerTitle">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">На сегодня</p>
+            <h2 id="trackerTitle">Мои привычки</h2>
+          </div>
+          <button class="add-button" id="openFormButton" type="button">
+            <span aria-hidden="true">+</span>
+            Новая привычка
+          </button>
+        </div>
+
+        <form class="habit-form" id="habitForm" hidden>
+          <label>
+            <span>Название привычки</span>
+            <input
+              id="habitName"
+              type="text"
+              maxlength="48"
+              placeholder="Например, пройти 8 000 шагов"
+              autocomplete="off"
+              required
+            />
+          </label>
+          <label>
+            <span>Иконка</span>
+            <select id="habitIcon">
+              <option value="☀️">☀️ Утро</option>
+              <option value="💧">💧 Вода</option>
+              <option value="📖">📖 Чтение</option>
+              <option value="🏃">🏃 Движение</option>
+              <option value="🧘">🧘 Спокойствие</option>
+              <option value="🌿">🌿 Другое</option>
+            </select>
+          </label>
+          <div class="form-actions">
+            <button class="text-button" id="cancelFormButton" type="button">
+              Отмена
+            </button>
+            <button class="primary-button" type="submit">Добавить</button>
+          </div>
+        </form>
+
+        <div class="filters" aria-label="Фильтр привычек">
+          <button class="filter active" data-filter="all" type="button">Все</button>
+          <button class="filter" data-filter="active" type="button">В процессе</button>
+          <button class="filter" data-filter="done" type="button">Готово</button>
+        </div>
+
+        <div class="habit-list" id="habitList"></div>
+
+        <div class="empty-state" id="emptyState" hidden>
+          <span aria-hidden="true">✦</span>
+          <h3>Здесь пока тихо</h3>
+          <p>Добавь первую привычку — небольшую и выполнимую.</p>
+        </div>
+      </section>
+
+      <footer>
+        <p>Всё хранится только в твоём браузере.</p>
+        <p>Сделано для спокойного прогресса <span aria-hidden="true">✦</span></p>
+      </footer>
+    </main>
+
+    <template id="habitTemplate">
+      <article class="habit-card">
+        <button class="check-button" type="button" aria-label="Отметить выполненной">
+          <span aria-hidden="true">✓</span>
+        </button>
+        <div class="habit-icon" aria-hidden="true"></div>
+        <div class="habit-info">
+          <h3></h3>
+          <p>Ежедневно</p>
+        </div>
+        <button class="delete-button" type="button" aria-label="Удалить привычку">×</button>
+      </article>
+    </template>
+
+    <script src="app.js"></script>
+  </body>
+</html>
