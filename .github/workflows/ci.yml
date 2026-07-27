@@ -19,5 +19,15 @@ jobs:
         run: docker run -d -p 8901:80 rythm
 
       - name: Check docker
-        run: curl --fail http://localhost:8901
+        run: curl --fail \
+             --retry 10 \
+             --retry-delay 1 \
+             --retry-all-errors \
+             http://localhost:8901
+
+      - name: failed logs
+        if: failure()
+        run: |
+             docker ps -a
+             docker log rythm
 
