@@ -1,4 +1,5 @@
 const assert = require("node:assert/strict");
+const { randomBytes } = require("node:crypto");
 const { spawn } = require("node:child_process");
 const http = require("node:http");
 const net = require("node:net");
@@ -8,6 +9,8 @@ const { after, before, test } = require("node:test");
 const projectRoot = path.resolve(__dirname, "..");
 let service;
 let port;
+let output = "";
+const adminKey = randomBytes(16).toString("hex");
 
 function getFreePort() {
   return new Promise((resolve, reject) => {
@@ -20,7 +23,7 @@ function getFreePort() {
   });
 }
 
-function request(pathname) {
+function request(pathname, headers = {}) {
   return new Promise((resolve, reject) => {
     const startedAt = Date.now();
     const request = http.get(
@@ -28,6 +31,7 @@ function request(pathname) {
         host: "127.0.0.1",
         port,
         path: pathname,
+        headers,
         timeout: 2_000,
       },
       (response) => {
@@ -75,9 +79,11 @@ before(async () => {
   service = spawn("./scripts/run.sh", {
     cwd: projectRoot,
     detached: true,
-    env: { ...process.env, PORT: String(port) },
-    stdio: "ignore",
+    env: { ...process.env, PORT: String(port), LOG_LEVEL: "silent", API_KEY: adminKey },
+    stdio: ["ignore", "pipe", "pipe"],
   });
+  service.stdout.on("data", (chunk) => { output += chunk.toString(); });
+  service.stderr.on("data", (chunk) => { output += chunk.toString(); });
   await waitUntilReady();
 });
 
@@ -116,4 +122,18 @@ test("an unknown path returns 404", async () => {
   const response = await request("/missing");
 
   assert.equal(response.status, 404);
+});
+
+test("admin status requires the runtime secret", async () => {
+  assert.equal((await request("/admin/status")).status, 401);
+  assert.equal((await request("/admin/status", { Authorization: "Bearer invalid" })).status, 401);
+  const response = await request("/admin/status", { Authorization: `Bearer ${adminKey}` });
+  assert.equal(response.status, 200);
+  assert.deepEqual(JSON.parse(response.body), { status: "ok", logLevel: "silent" });
+});
+
+test("LOG_LEVEL=silent suppresses request logs and the secret never appears in logs", async () => {
+  await request("/admin/status", { Authorization: `Bearer ${adminKey}` });
+  assert.ok(!output.includes("GET /"));
+  assert.ok(!output.includes(adminKey));
 });

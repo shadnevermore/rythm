@@ -1,8 +1,17 @@
 const fs = require("node:fs");
+const { timingSafeEqual } = require("node:crypto");
 const http = require("node:http");
 const path = require("node:path");
 
 const projectRoot = __dirname;
+const logLevel = process.env.LOG_LEVEL || "info";
+if (!["info", "silent"].includes(logLevel)) {
+  console.error("LOG_LEVEL must be info or silent");
+  process.exit(1);
+}
+const adminAuthorization = process.env.API_KEY
+  ? Buffer.from(`Bearer ${process.env.API_KEY}`)
+  : null;
 const staticFiles = new Map([
   ["/", ["index.html", "text/html; charset=utf-8"]],
   ["/index.html", ["index.html", "text/html; charset=utf-8"]],
@@ -26,9 +35,27 @@ const server = http.createServer((request, response) => {
   }
 
   const pathname = new URL(request.url, "http://localhost").pathname;
+  if (logLevel === "info") {
+    console.log(`${request.method} ${pathname}`);
+  }
 
   if (pathname === "/healthz") {
     send(response, 200, "application/json; charset=utf-8", '{"status":"ok"}\n');
+    return;
+  }
+
+  if (pathname === "/admin/status") {
+    if (!adminAuthorization) {
+      send(response, 503, "text/plain; charset=utf-8", "Admin access is not configured\n");
+      return;
+    }
+    const authorization = Buffer.from(request.headers.authorization || "");
+    if (authorization.length !== adminAuthorization.length
+        || !timingSafeEqual(authorization, adminAuthorization)) {
+      send(response, 401, "text/plain; charset=utf-8", "Unauthorized\n");
+      return;
+    }
+    send(response, 200, "application/json; charset=utf-8", JSON.stringify({ status: "ok", logLevel }) + "\n");
     return;
   }
 
