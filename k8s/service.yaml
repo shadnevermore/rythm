@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: rythm
+spec:
+  selector:
+    app: rythm
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
