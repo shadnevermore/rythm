@@ -22,7 +22,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: app
-          image: ghcr.io/shadnevermore/rythm:e15fa6fdbfc5325e89aca7c8fa150b158c8fbaf2
+          image: ghcr.io/shadnevermore/rythm:5cbccf5180f04e6f2d70a595f4acc515fed69aaa
           ports:
             - name: http
               containerPort: 8080
