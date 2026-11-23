@@ -1,0 +1,64 @@
+# Optional, and not marked: run the M5 marker - static AND live - on every pull request.
+# Copy to .github/workflows/m5.yml in YOUR project. There are no blanks.
+# It runs on GitHub's Intel machines, so it works for Apple M-series users too. The marker
+# makes its own throwaway kind cluster, installs Argo CD 3.5.3 (checked), and tests your
+# Application exactly as the official run does. It takes about five to ten minutes.
+# It deploys nothing anywhere: the cluster lives and dies inside this job.
+name: M5 check
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  m5:
+    name: mark_m5.py --kind
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+          fetch-depth: 0      # the marker reads the whole history (credentials, the image bump)
+          # The commit you pushed, not GitHub's preview merge: Argo CD must be able to fetch it.
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Install kind, kubectl and helm - pinned versions, checksums checked
+        env:
+          KIND_VERSION: v0.33.0
+          KIND_SHA256: aee6151561422756b764a4ae28e7f44cda5af5a9eead3cc9985112b1de8d8e0d
+          KUBECTL_VERSION: v1.37.1
+          KUBECTL_SHA512: decde4d990d0fbf6451e65524dec42c549de3339f27005c45af8d3c61cca1de852524ebf2215c82be86d4ab2621c823f56f718b8d2c304b9100a903e696c0c32
+          HELM_VERSION: v4.2.1          # the Helm inside Argo CD 3.5.3
+          HELM_SHA256: 479dca836e5b45e8bd222400c5591b0e3a647378f03ff96597180db97c17fdae
+        run: |
+          curl -fsSLo kind "https://github.com/kubernetes-sigs/kind/releases/download/${KIND_VERSION}/kind-linux-amd64"
+          echo "${KIND_SHA256}  kind" | sha256sum -c -
+          curl -fsSLO "https://dl.k8s.io/${KUBECTL_VERSION}/kubernetes-client-linux-amd64.tar.gz"
+          echo "${KUBECTL_SHA512}  kubernetes-client-linux-amd64.tar.gz" | sha512sum -c -
+          tar -xzf kubernetes-client-linux-amd64.tar.gz kubernetes/client/bin/kubectl
+          curl -fsSLO "https://get.helm.sh/helm-${HELM_VERSION}-linux-amd64.tar.gz"
+          echo "${HELM_SHA256}  helm-${HELM_VERSION}-linux-amd64.tar.gz" | sha256sum -c -
+          tar -xzf "helm-${HELM_VERSION}-linux-amd64.tar.gz" linux-amd64/helm
+          sudo install -m 0755 kind kubernetes/client/bin/kubectl linux-amd64/helm /usr/local/bin/
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"
+      - run: python -m pip install --quiet pyyaml==6.0.3
+
+      - name: Run the M5 marker - static and live
+        run: |
+          curl -fsSLO https://raw.githubusercontent.com/inf345/inf345-week10-lab/main/mark_m5.py
+          python mark_m5.py --path . --kind
